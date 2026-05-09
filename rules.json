@@ -1,0 +1,155 @@
+[
+  {
+    "rule_id": "R1",
+    "name": "Has Phone",
+    "category": "fit",
+    "logic": "AND",
+    "conditions": [
+      {
+        "field": "sf_phone_number.value",
+        "operator": "exists"
+      }
+    ],
+    "score": 10,
+    "description": "Phone present"
+  },
+  {
+    "rule_id": "R2",
+    "name": "Has Email",
+    "category": "fit",
+    "logic": "AND",
+    "conditions": [
+      {
+        "field": "sf_email",
+        "operator": "exists"
+      }
+    ],
+    "score": 10,
+    "description": "Email present"
+  },
+  {
+    "rule_id": "R3",
+    "name": "Recent Lead",
+    "category": "behavior",
+    "logic": "AND",
+    "conditions": [
+      {
+        "field": "sf_created_at",
+        "operator": "less_than_days",
+        "value": 7
+      }
+    ],
+    "score": 15,
+    "description": "Very recent lead"
+  },
+  {
+    "rule_id": "R4",
+    "name": "High Pipeline Probability",
+    "category": "behavior",
+    "logic": "AND",
+    "conditions": [
+      {
+        "field": "sf_pipeline_stage.winprobability",
+        "operator": "gt",
+        "value": 20
+      }
+    ],
+    "score": 20,
+    "description": "High chance of conversion"
+  },
+  {
+    "rule_id": "R5",
+    "name": "Facebook Source",
+    "category": "behavior",
+    "logic": "OR",
+    "conditions": [
+      {
+        "field": "sf_source.label",
+        "operator": "eq",
+        "value": "Facebook"
+      },
+      {
+        "field": "cf_lead_source.label",
+        "operator": "eq",
+        "value": "Facebook"
+      }
+    ],
+    "score": 10,
+    "description": "Lead came from Facebook"
+  },
+  {
+    "rule_id": "R6",
+    "name": "Missing Email",
+    "category": "quality",
+    "logic": "AND",
+    "conditions": [
+      {
+        "field": "sf_email",
+        "operator": "missing"
+      }
+    ],
+    "score": -15,
+    "description": "Email missing → lower quality"
+  },
+  {
+    "rule_id": "R7",
+    "name": "Has Location Data",
+    "category": "quality",
+    "logic": "OR",
+    "conditions": [
+      {
+        "field": "sf_city",
+        "operator": "exists"
+      },
+      {
+        "field": "sf_state",
+        "operator": "exists"
+      }
+    ],
+    "score": 5,
+    "description": "Location available"
+  },
+  {
+  "rule_id": "R8",
+  "name": "Valid Email",
+  "category": "quality",
+  "logic": "AND",
+  "conditions": [
+    {
+      "field": "sf_email",
+      "operator": "valid_email"
+    }
+  ],
+  "score": 15,
+  "description": "Email is valid"
+},
+{
+  "rule_id": "R9",
+  "name": "Valid Phone",
+  "category": "quality",
+  "logic": "AND",
+  "conditions": [
+    {
+      "field": "sf_phone_number.value",
+      "operator": "valid_phone"
+    }
+  ],
+  "score": 15,
+  "description": "Phone is valid"
+},
+{
+  "rule_id": "R10",
+  "name": "High Value Geography",
+  "category": "fit",
+  "logic": "OR",
+  "conditions": [
+    {
+      "field": "sf_country",
+      "operator": "in",
+      "value": ["USA", "UK", "Canada"]
+    }
+  ],
+  "score": 20,
+  "description": "High value country"
+}
+]
