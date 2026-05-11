@@ -97,7 +97,7 @@ def run():
     fusion = FusionLayer()
 
     # 🆕 ADDED: Initialize ML refinement layer
-    ml_refiner = MLRefinementLayer()
+    ml_refiner = MLRefinementLayer() 
 
     rules = RuleParser().load_rules("rules.json")
     executor = RuleExecutor()
