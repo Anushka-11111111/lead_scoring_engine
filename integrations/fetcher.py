@@ -1,6 +1,5 @@
 from typing import List, Dict
 from playwright.sync_api import sync_playwright
-import time
 
 
 class LeadFetcher:
@@ -17,12 +16,8 @@ class LeadFetcher:
         TOGILE_APP_URL = "https://app.togile.com"
         API_URL = "https://server.togile.com/lead/table"
 
-        all_leads = []
-
         with sync_playwright() as p:
 
-            # ✅ FIXED FOR WINDOWS
-            # Removed invalid Linux executable_path
             browser = p.chromium.launch(
                 headless=False,
                 args=[
@@ -42,13 +37,9 @@ class LeadFetcher:
             input("🔐 Login manually, then press ENTER...")
 
             page.wait_for_load_state("networkidle")
-            time.sleep(3)
 
             print("📡 Fetching leads...")
 
-            # ==================================================
-            # FETCH ONLY FIRST 5 LEADS
-            # ==================================================
             payload = {
                 "page": 1,
                 "quantity": 5,
@@ -56,7 +47,7 @@ class LeadFetcher:
                 "isAscending": False,
                 "searchString": "",
                 "filters": [],
-                "isOr": True
+                "isOr": True,
             }
 
             response = context.request.put(
@@ -68,22 +59,14 @@ class LeadFetcher:
                 data = response.json()
 
             except Exception:
-
                 print("❌ Failed to parse response")
-                print(response.text())
-
                 browser.close()
-
                 return []
 
             browser.close()
 
-        print("🔍 RAW RESPONSE:", data)
-
         if not data.get("success", False):
-
             print("❌ API error:", data)
-
             return []
 
         leads = data.get("data", {}).get("entities", [])
