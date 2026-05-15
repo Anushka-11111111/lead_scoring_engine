@@ -230,8 +230,8 @@ class RuleExecutor:
         # --------------------------------------------------
         for rule in rules:
 
-            print(f"\n🧠 RULE: {rule.name}")
-            print(f"   LOGIC: {rule.logic}")
+            # print(f"\n🧠 RULE: {rule.name}")
+            # print(f"   LOGIC: {rule.logic}")
 
             condition_results = []
             matched_fields = []
@@ -244,10 +244,10 @@ class RuleExecutor:
             # --------------------------------------------------
             for cond in rule.conditions:
 
-                print(f"\n   🧩 CONDITION:")
-                print(f"      field   : {cond.field}")
-                print(f"      operator: {cond.operator}")
-                print(f"      value   : {cond.value}")
+                # print(f"\n   🧩 CONDITION:")
+                # print(f"      field   : {cond.field}")
+                # print(f"      operator: {cond.operator}")
+                # print(f"      value   : {cond.value}")
 
                 condition_met = False
 
@@ -263,15 +263,15 @@ class RuleExecutor:
 
                     if result:
 
-                        print(
-                            f"      ✅ MATCHED by: "
-                            f"{signal.field_path}"
-                        )
+                        # print(
+                        #     f"      ✅ MATCHED by: "
+                        #     f"{signal.field_path}"
+                        # )
 
-                        print(
-                            f"      📦 VALUE: "
-                            f"{signal.value}"
-                        )
+                        # print(
+                        #     f"      📦 VALUE: "
+                        #     f"{signal.value}"
+                        # )
 
                         condition_met = True
 
@@ -292,19 +292,19 @@ class RuleExecutor:
                             )
                         )
 
-                        print(
-                            f"      ⚡ Dynamic Score: "
-                            f"{old_score:.2f} "
-                            f"→ "
-                            f"{dynamic_score:.2f}"
-                        )
+                        # print(
+                        #     f"      ⚡ Dynamic Score: "
+                        #     f"{old_score:.2f} "
+                        #     f"→ "
+                        #     f"{dynamic_score:.2f}"
+                        # )
 
                         break
 
-                print(
-                    f"      👉 CONDITION RESULT: "
-                    f"{condition_met}"
-                )
+                # print(
+                #     f"      👉 CONDITION RESULT: "
+                #     f"{condition_met}"
+                # )
 
                 condition_results.append(condition_met)
 
