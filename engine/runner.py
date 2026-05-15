@@ -223,7 +223,7 @@ def run(leads, pusher=None):
     # =========================================
 
     SCRAPE_STATUS["running"] = False
-
+gi
     print(f"🔥 TOTAL PROCESSED: {processed}")
 
     return processed
