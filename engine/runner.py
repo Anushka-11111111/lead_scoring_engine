@@ -8,7 +8,6 @@ from intelligence.signal_builder import SignalBuilder
 from rules_engine.rule_parser import RuleParser
 from rules_engine.rule_executor import RuleExecutor
 
-# ✅ DASHBOARD STORAGE
 from services.analytics_service import (
     SCRAPED_LEADS,
     SCRAPE_STATUS
@@ -19,30 +18,24 @@ def run(leads, pusher=None):
 
     print("🧠 AI ENGINE STARTED")
 
-    # =========================================
+    # =========================
     # RESET DASHBOARD STATE
-    # =========================================
-
+    # =========================
     SCRAPED_LEADS.clear()
 
     SCRAPE_STATUS["running"] = True
+    SCRAPE_STATUS["completed"] = False
     SCRAPE_STATUS["processed"] = 0
     SCRAPE_STATUS["total"] = len(leads)
 
-    # =========================================
+    # =========================
     # PIPELINE INIT
-    # =========================================
-
+    # =========================
     extractor = FieldExtractor()
-
     cleaner = SignalCleaner()
-
     quality_layer = FeatureQualityLayer()
-
     signal_builder = SignalBuilder()
-
     fusion = FusionLayer()
-
     ml_refiner = MLRefinementLayer()
 
     rules = RuleParser().load_rules("rules.json")
@@ -51,10 +44,9 @@ def run(leads, pusher=None):
 
     processed = 0
 
-    # =========================================
+    # =========================
     # PROCESS LEADS
-    # =========================================
-
+    # =========================
     for lead in leads:
 
         lead_id = str(
@@ -66,21 +58,14 @@ def run(leads, pusher=None):
 
         try:
 
-            # =========================================
-            # EXTRACT + CLEAN
-            # =========================================
+            # =========================
+            # EXTRACT / SCORE
+            # =========================
+            observations = extractor.extract_all_fields(lead)
 
-            observations = extractor.extract_all_fields(
-                lead
-            )
+            observations = cleaner.clean(observations)
 
-            observations = cleaner.clean(
-                observations
-            )
-
-            quality = quality_layer.compute(
-                observations
-            )
+            quality = quality_layer.compute(observations)
 
             signals = signal_builder.build(
                 observations,
@@ -97,14 +82,7 @@ def run(leads, pusher=None):
                 quality
             )
 
-            # =========================================
-            # RULE ENGINE OUTPUT
-            # =========================================
-
-            rule_score = result.get(
-                "final_score",
-                0
-            )
+            rule_score = result.get("final_score", 0)
 
             label = result.get(
                 "classification",
@@ -115,10 +93,6 @@ def run(leads, pusher=None):
                 "breakdown",
                 ""
             )
-
-            # =========================================
-            # ML REFINEMENT
-            # =========================================
 
             ml_out = ml_refiner.refine(
                 observations,
@@ -131,10 +105,31 @@ def run(leads, pusher=None):
                 1
             )
 
-            # =========================================
-            # CRM PAYLOAD
-            # =========================================
+            # =========================
+            # COMPANY NAME FIX
+            # =========================
+            company_name = (
+                lead.get("sf_company_name")
+                or lead.get("company_name")
+                or lead.get("company")
+                or lead.get("sf_company")
+                or "Unknown Company"
+            )
 
+            # =========================
+            # LEAD NAME FIX
+            # =========================
+            lead_name = (
+                lead.get("sf_first_name")
+                or lead.get("name")
+                or lead.get("full_name")
+                or lead.get("sf_name")
+                or "Unknown Lead"
+            )
+
+            # =========================
+            # PAYLOAD
+            # =========================
             payload = {
                 "ai_lead_score_test": rule_score,
                 "ai_label_test": label,
@@ -144,72 +139,48 @@ def run(leads, pusher=None):
                 "ml_confidence_level": "Low"
             }
 
-            # =========================================
+            # =========================
             # PUSH TO CRM
-            # =========================================
-
+            # =========================
             if pusher:
 
                 try:
-
                     pusher.push_score(
                         lead_id,
                         payload
                     )
 
                 except Exception as e:
-
                     print(
                         f"⚠️ Push failed for {lead_id}: {e}"
                     )
 
-            # =========================================
-            # BUILD DISPLAY NAME
-            # =========================================
+            # =========================
+            # PUSH TO DASHBOARD
+            # =========================
+            SCRAPED_LEADS.append({
 
-            display_name = (
-                lead.get("sf_first_name")
-                or lead.get("sf_name")
-                or lead.get("name")
-                or lead.get("company")
-                or lead.get("sf_company_name")
-                or "Unknown Lead"
-            )
-
-            # =========================================
-            # DASHBOARD OBJECT
-            # =========================================
-
-            dashboard_lead = {
-
-                # table compatibility
-                "id": lead_id,
                 "lead_id": lead_id,
 
-                # frontend compatibility
-                "name": display_name,
-                "company": display_name,
+                "name": lead_name,
 
-                # analytics
+                "company": company_name,
+
                 "score": rule_score,
+
                 "label": label,
+
                 "ml_probability": ml_prob
-            }
-
-            # =========================================
-            # STORE FOR ANALYTICS ROUTE
-            # =========================================
-
-            SCRAPED_LEADS.append(
-                dashboard_lead
-            )
+            })
 
             processed += 1
 
             SCRAPE_STATUS["processed"] = processed
 
             print(
-                f"✅ {display_name} | Score: {rule_score}"
+                f"✅ {lead_name} | "
+                f"{company_name} | "
+                f"Score: {rule_score}"
             )
 
         except Exception as e:
@@ -218,12 +189,12 @@ def run(leads, pusher=None):
                 f"❌ Lead failed {lead_id}: {e}"
             )
 
-    # =========================================
-    # COMPLETE
-    # =========================================
-
+    # =========================
+    # FINAL STATUS
+    # =========================
     SCRAPE_STATUS["running"] = False
-gi
+    SCRAPE_STATUS["completed"] = True
+
     print(f"🔥 TOTAL PROCESSED: {processed}")
 
     return processed

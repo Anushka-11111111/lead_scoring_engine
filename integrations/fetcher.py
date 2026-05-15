@@ -1,6 +1,4 @@
 from typing import List, Dict
-from playwright.sync_api import sync_playwright
-import time
 
 
 class LeadFetcher:
@@ -10,86 +8,85 @@ class LeadFetcher:
 
     def fetch_leads(self) -> List[Dict]:
 
-        TOGILE_APP_URL = "https://app.togile.com"
-        API_URL = "https://server.togile.com/lead/table"
+        print("📡 Fetching leads automatically...")
 
-        all_leads = []
+        endpoint = "/lead/table"
 
-        with sync_playwright() as p:
+        payload = {
+            "page": 1,
+            "quantity": 1650,
+            "sortField": "sf_created_at",
+            "isAscending": False,
+            "searchString": "",
+            "filters": [],
+            "isOr": True,
+        }
 
-            # ✅ FIXED FOR WINDOWS
-            # Removed invalid Linux executable_path
-            browser = p.chromium.launch(
-                headless=False,
-                args=[
-                    "--no-sandbox",
-                    "--disable-setuid-sandbox",
-                    "--disable-dev-shm-usage",
-                    "--disable-gpu",
-                ],
-            )
+        try:
 
-            context = browser.new_context()
-            page = context.new_page()
+            # =========================================
+            # CRM API REQUEST
+            # =========================================
 
-            print("🌐 Opening Togile...")
-            page.goto(TOGILE_APP_URL)
-
-            input("🔐 Login manually, then press ENTER...")
-
-            page.wait_for_load_state("networkidle")
-            time.sleep(3)
-
-            print("📡 Fetching leads...")
-
-            # ==================================================
-            # FETCH ONLY FIRST 5 LEADS
-            # ==================================================
-            payload = {
-                "page": 1,
-                "quantity": 5,
-                "sortField": "sf_created_at",
-                "isAscending": False,
-                "searchString": "",
-                "filters": [],
-                "isOr": True
-            }
-
-            # CRMClient already returns parsed JSON
-            data = self.client.put(
+            response = self.client.put(
                 endpoint=endpoint,
                 payload=payload
             )
 
-            print("📄 RESPONSE RECEIVED")
+            print("✅ CRM response received")
 
-            except Exception:
+            # =========================================
+            # RESPONSE DEBUG
+            # =========================================
 
-                print("❌ Failed to parse response")
-                print(response.text())
+            print("📄 RESPONSE:")
+            print(str(response)[:2000])
 
-                browser.close()
+            # =========================================
+            # HANDLE RESPONSE TYPES
+            # =========================================
+
+            if isinstance(response, dict):
+
+                data = response
+
+            else:
+
+                try:
+                    data = response.json()
+
+                except Exception:
+
+                    print("❌ Failed parsing JSON")
+
+                    return []
+
+            # =========================================
+            # API SUCCESS CHECK
+            # =========================================
+
+            if not data.get("success", False):
+
+                print("❌ API ERROR:")
+                print(data)
 
                 return []
 
-        # =========================
-        # API SUCCESS CHECK
-        # =========================
+            # =========================================
+            # EXTRACT LEADS
+            # =========================================
 
-        print("🔍 RAW RESPONSE:", data)
+            leads = (
+                data.get("data", {})
+                .get("entities", [])
+            )
 
-        if not data.get("success", False):
+            print(f"✅ TOTAL LEADS FETCHED: {len(leads)}")
 
-            print("❌ API error:", data)
+            return leads
+
+        except Exception as e:
+
+            print(f"❌ Failed fetching leads: {e}")
 
             return []
-
-        # =========================
-        # EXTRACT LEADS
-        # =========================
-
-        leads = data.get("data", {}).get("entities", [])
-
-        print(f"✅ TOTAL LEADS FETCHED: {len(leads)}")
-
-        return leads
