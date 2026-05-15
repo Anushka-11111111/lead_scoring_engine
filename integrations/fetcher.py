@@ -1,4 +1,6 @@
 from typing import List, Dict
+from playwright.sync_api import sync_playwright
+import time
 
 
 class LeadFetcher:
@@ -8,21 +10,50 @@ class LeadFetcher:
 
     def fetch_leads(self) -> List[Dict]:
 
-        print("📡 Fetching leads automatically...")
+        TOGILE_APP_URL = "https://app.togile.com"
+        API_URL = "https://server.togile.com/lead/table"
 
-        endpoint = "/lead/table"
+        all_leads = []
 
-        payload = {
-            "page": 1,
-            "quantity": 1650,
-            "sortField": "sf_created_at",
-            "isAscending": False,
-            "searchString": "",
-            "filters": [],
-            "isOr": True,
-        }
+        with sync_playwright() as p:
 
-        try:
+            # ✅ FIXED FOR WINDOWS
+            # Removed invalid Linux executable_path
+            browser = p.chromium.launch(
+                headless=False,
+                args=[
+                    "--no-sandbox",
+                    "--disable-setuid-sandbox",
+                    "--disable-dev-shm-usage",
+                    "--disable-gpu",
+                ],
+            )
+
+            context = browser.new_context()
+            page = context.new_page()
+
+            print("🌐 Opening Togile...")
+            page.goto(TOGILE_APP_URL)
+
+            input("🔐 Login manually, then press ENTER...")
+
+            page.wait_for_load_state("networkidle")
+            time.sleep(3)
+
+            print("📡 Fetching leads...")
+
+            # ==================================================
+            # FETCH ONLY FIRST 5 LEADS
+            # ==================================================
+            payload = {
+                "page": 1,
+                "quantity": 5,
+                "sortField": "sf_created_at",
+                "isAscending": False,
+                "searchString": "",
+                "filters": [],
+                "isOr": True
+            }
 
             # CRMClient already returns parsed JSON
             data = self.client.put(
@@ -32,20 +63,24 @@ class LeadFetcher:
 
             print("📄 RESPONSE RECEIVED")
 
-        except Exception as e:
+            except Exception:
 
-            print(f"❌ Failed fetching leads: {e}")
+                print("❌ Failed to parse response")
+                print(response.text())
 
-            return []
+                browser.close()
+
+                return []
 
         # =========================
         # API SUCCESS CHECK
         # =========================
 
-        if not data.get("success"):
+        print("🔍 RAW RESPONSE:", data)
 
-            print("❌ API ERROR:")
-            print(data)
+        if not data.get("success", False):
+
+            print("❌ API error:", data)
 
             return []
 
