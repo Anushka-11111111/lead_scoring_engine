@@ -1,36 +1,55 @@
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+
 class CRMAuth:
 
-    def __init__(self, cookies):
+    def __init__(self):
 
-        # Raw Playwright cookies
-        self.cookies = cookies
+        # =========================================
+        # JWT TOKEN FROM .env
+        # =========================================
 
-    def get_cookies(self):
+        self.token = os.getenv("TOGILE_TOKEN")
 
-        """
-        Convert Playwright cookie list
-        into requests-compatible cookie dict.
-        """
+        if not self.token:
 
-        cookie_dict = {}
+            raise Exception(
+                "❌ TOGILE_TOKEN missing in .env"
+            )
 
-        for cookie in self.cookies:
-
-            cookie_dict[cookie["name"]] = cookie["value"]
-
-        return cookie_dict
+    # =========================================
+    # HEADERS
+    # =========================================
 
     def get_headers(self):
 
-        """
-        Optional additional headers.
-        Most auth is handled through cookies.
-        """
+        return {
+
+            "Authorization": (
+                f"Bearer {self.token}"
+            ),
+
+            "Accept": "*/*",
+
+            "Content-Type": "application/json",
+
+            "Origin": "https://app.togile.com",
+
+            "Referer": "https://app.togile.com/",
+
+            "User-Agent": "Mozilla/5.0"
+        }
+
+    # =========================================
+    # COOKIES
+    # =========================================
+
+    def get_cookies(self):
 
         return {
-            "Accept": "*/*",
-            "Content-Type": "application/json",
-            "Origin": "https://app.togile.com",
-            "Referer": "https://app.togile.com/",
-            "User-Agent": "Mozilla/5.0"
+
+            "token": self.token
         }

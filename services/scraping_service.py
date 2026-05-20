@@ -1,67 +1,73 @@
 import os
-from dotenv import load_dotenv
-load_dotenv(override=True)
 
-from playwright.sync_api import sync_playwright
+from dotenv import load_dotenv
+
+load_dotenv(override=True)
 
 from integrations.auth import CRMAuth
 from integrations.crm_client import CRMClient
 from integrations.pusher import ScorePusher
 from integrations.fetcher import LeadFetcher
 
-from engine.runner import run   # ✅ FIXED IMPORT
+from engine.runner import run
 
 
 class ScrapingService:
 
     def start(self):
 
-        print("🚀 Scraping service started")
+        print("🚀 API Sync Service Started")
 
-        with sync_playwright() as p:
+        # =========================================
+        # CRM AUTH
+        # =========================================
 
-            browser = p.chromium.launch(headless=False)
-            context = browser.new_context()
-            page = context.new_page()
+        auth = CRMAuth()
 
-            print("🌐 Opening Togile")
-            page.goto("https://app.togile.com/", wait_until="networkidle")
+        # =========================================
+        # BASE URL
+        # =========================================
 
-            print("🔐 Please login...")
+        base_url = os.getenv("CRM_BASE_URL")
 
-            while True:
-                try:
-                    page.wait_for_selector("text=Leads", timeout=5000)
-                    print("✅ Login detected")
-                    break
-                except:
-                    print("⏳ Waiting for login...")
-                    page.wait_for_timeout(3000)
+        if not base_url:
 
-            page.goto("https://app.togile.com/leads", wait_until="networkidle")
-            page.wait_for_timeout(8000)
+            raise ValueError(
+                "❌ CRM_BASE_URL missing in .env"
+            )
 
-            # ✅ FIX COOKIE HANDLING
-            cookies = context.cookies()
-            auth = CRMAuth(cookies=cookies)
+        # =========================================
+        # CRM CLIENT
+        # =========================================
 
-            base_url = os.getenv("CRM_BASE_URL")
-            if not base_url:
-                raise ValueError("CRM_BASE_URL missing in .env")
+        client = CRMClient(
+            base_url=base_url,
+            auth=auth
+        )
 
-            client = CRMClient(base_url=base_url, auth=auth)
-            pusher = ScorePusher(client)
+        # =========================================
+        # PUSHER
+        # =========================================
 
-            # ✅ FETCH LEADS
-            fetcher = LeadFetcher(client)
-            leads = fetcher.fetch_leads()
+        pusher = ScorePusher(client)
 
-            print(f"📦 Leads fetched: {len(leads)}")
+        # =========================================
+        # FETCH LEADS
+        # =========================================
 
-            # ✅ RUN ENGINE (NO context passed)
-            run(leads=leads, pusher=pusher)
+        fetcher = LeadFetcher(client)
 
-            print("🛑 Keeping browser open for inspection...")
-            page.wait_for_timeout(15000)
+        leads = fetcher.fetch_leads()
 
-            browser.close()
+        print(f"📦 Leads fetched: {len(leads)}")
+
+        # =========================================
+        # RUN ENGINE
+        # =========================================
+
+        run(
+            leads=leads,
+            pusher=pusher
+        )
+
+        print("✅ Sync completed successfully")

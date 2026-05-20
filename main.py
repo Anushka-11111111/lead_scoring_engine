@@ -157,3 +157,6 @@ def run(context):
             print(f"❌ Failed lead {lead_id}: {e}")
 
     print(f"\n🔥 TOTAL PROCESSED: {processed}")
+
+from dotenv import load_dotenv
+load_dotenv()
