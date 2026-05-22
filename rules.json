@@ -1,7 +1,7 @@
 [
   {
     "rule_id": "R1",
-    "name": "Has Phone",
+    "name": "Contact Presence - Phone",
     "category": "fit",
     "logic": "AND",
     "conditions": [
@@ -11,11 +11,11 @@
       }
     ],
     "score": 10,
-    "description": "Phone present"
+    "description": "Lead has a recorded phone number indicating reachable contact information"
   },
   {
     "rule_id": "R2",
-    "name": "Has Email",
+    "name": "Contact Presence - Email",
     "category": "fit",
     "logic": "AND",
     "conditions": [
@@ -25,11 +25,11 @@
       }
     ],
     "score": 10,
-    "description": "Email present"
+    "description": "Lead has a recorded email address indicating valid communication channel"
   },
   {
     "rule_id": "R3",
-    "name": "Recent Lead",
+    "name": "Lead Recency - High Intent Window",
     "category": "behavior",
     "logic": "AND",
     "conditions": [
@@ -40,11 +40,11 @@
       }
     ],
     "score": 15,
-    "description": "Very recent lead"
+    "description": "Lead was created within the last 7 days indicating high engagement recency"
   },
   {
     "rule_id": "R4",
-    "name": "High Pipeline Probability",
+    "name": "Pipeline Conversion Strength",
     "category": "behavior",
     "logic": "AND",
     "conditions": [
@@ -55,11 +55,11 @@
       }
     ],
     "score": 20,
-    "description": "High chance of conversion"
+    "description": "Pipeline-assigned win probability indicates above-threshold conversion likelihood"
   },
   {
     "rule_id": "R5",
-    "name": "Facebook Source",
+    "name": "Acquisition Source - Facebook Attribution",
     "category": "behavior",
     "logic": "OR",
     "conditions": [
@@ -75,11 +75,11 @@
       }
     ],
     "score": 10,
-    "description": "Lead came from Facebook"
+    "description": "Lead acquisition source attributed to Facebook across CRM or custom field tracking"
   },
   {
     "rule_id": "R6",
-    "name": "Missing Email",
+    "name": "Data Quality Penalty - Missing Email",
     "category": "quality",
     "logic": "AND",
     "conditions": [
@@ -89,11 +89,11 @@
       }
     ],
     "score": -15,
-    "description": "Email missing → lower quality"
+    "description": "Email field is missing, reducing overall lead data completeness score"
   },
   {
     "rule_id": "R7",
-    "name": "Has Location Data",
+    "name": "Contact Enrichment - Location Availability",
     "category": "quality",
     "logic": "OR",
     "conditions": [
@@ -107,49 +107,49 @@
       }
     ],
     "score": 5,
-    "description": "Location available"
+    "description": "Lead contains partial or full location data enabling geographic segmentation"
   },
   {
-  "rule_id": "R8",
-  "name": "Valid Email",
-  "category": "quality",
-  "logic": "AND",
-  "conditions": [
-    {
-      "field": "sf_email",
-      "operator": "valid_email"
-    }
-  ],
-  "score": 15,
-  "description": "Email is valid"
-},
-{
-  "rule_id": "R9",
-  "name": "Valid Phone",
-  "category": "quality",
-  "logic": "AND",
-  "conditions": [
-    {
-      "field": "sf_phone_number.value",
-      "operator": "valid_phone"
-    }
-  ],
-  "score": 15,
-  "description": "Phone is valid"
-},
-{
-  "rule_id": "R10",
-  "name": "High Value Geography",
-  "category": "fit",
-  "logic": "OR",
-  "conditions": [
-    {
-      "field": "sf_country",
-      "operator": "in",
-      "value": ["USA", "UK", "Canada"]
-    }
-  ],
-  "score": 20,
-  "description": "High value country"
-}
+    "rule_id": "R8",
+    "name": "Email Format Validation",
+    "category": "quality",
+    "logic": "AND",
+    "conditions": [
+      {
+        "field": "sf_email",
+        "operator": "valid_email"
+      }
+    ],
+    "score": 15,
+    "description": "Email passes format and structural validation checks"
+  },
+  {
+    "rule_id": "R9",
+    "name": "Phone Number Validation",
+    "category": "quality",
+    "logic": "AND",
+    "conditions": [
+      {
+        "field": "sf_phone_number.value",
+        "operator": "valid_phone"
+      }
+    ],
+    "score": 15,
+    "description": "Phone number passes format and validity checks for dialable contact"
+  },
+  {
+    "rule_id": "R10",
+    "name": "Geo-Market Value Tier",
+    "category": "fit",
+    "logic": "OR",
+    "conditions": [
+      {
+        "field": "sf_country",
+        "operator": "in",
+        "value": ["USA", "UK", "Canada"]
+      }
+    ],
+    "score": 20,
+    "description": "Lead originates from high-value enterprise markets with strong conversion potential"
+  }
 ]

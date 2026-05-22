@@ -1,0 +1,30 @@
+.card {
+  background: #111827;
+  border-radius: 18px;
+  padding: 20px;
+  color: white;
+  width: 300px;
+
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+
+  transition: 0.3s;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+}
+
+.title {
+  font-size: 24px;
+  margin-bottom: 10px;
+}
+
+.company {
+  color: #9ca3af;
+}
+
+.score {
+  margin-top: 12px;
+  color: #22c55e;
+  font-weight: bold;
+}

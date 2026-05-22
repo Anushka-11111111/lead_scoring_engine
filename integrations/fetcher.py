@@ -14,7 +14,7 @@ class LeadFetcher:
 
         payload = {
             "page": 1,
-            "quantity": 1650,
+            "quantity": 50000,
             "sortField": "sf_created_at",
             "isAscending": False,
             "searchString": "",
