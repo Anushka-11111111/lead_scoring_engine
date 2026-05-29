@@ -7,13 +7,9 @@ class Settings(BaseSettings):
     CRM_BASE_URL: str
     CRM_API_KEY: str
     CRM_SECRET_KEY: str
-    
-    # ✅ Optional CRM fields
-    CRM_REDIRECT_LOGIN_URL: Optional[str] = None
-    CRM_EMAIL: Optional[str] = None
-    CRM_PASSWORD: Optional[str] = None
-    TOGILE_TOKEN: Optional[str] = None
-    
+    CRM_ORIGIN: str
+    CRM_LEADS_QUANTITY: int = 500
+
     # ✅ ML Config (with defaults)
     ML_RETRAIN_INTERVAL_HOURS: int = 12
     ML_MIN_LABELED_SAMPLES: int = 50
@@ -29,6 +25,6 @@ class Settings(BaseSettings):
 settings = Settings()
 
 # 🔒 Safety check on startup for required fields only
-for field in ["CRM_BASE_URL", "CRM_API_KEY", "CRM_SECRET_KEY"]:
+for field in ["CRM_BASE_URL", "CRM_API_KEY", "CRM_SECRET_KEY", "CRM_ORIGIN"]:
     if not getattr(settings, field):
         raise RuntimeError(f"❌ Missing required env variable: {field}")

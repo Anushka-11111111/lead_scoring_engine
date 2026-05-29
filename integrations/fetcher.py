@@ -1,92 +1,39 @@
 from typing import List, Dict
 
+from core_contracts.settings import settings
+
 
 class LeadFetcher:
 
     def __init__(self, client):
         self.client = client
 
-    def fetch_leads(self) -> List[Dict]:
+    def fetch_leads(self, quantity: int | None = None) -> List[Dict]:
 
-        print("📡 Fetching leads automatically...")
-
-        endpoint = "/lead/table"
-
-        payload = {
-            "page": 1,
-            "quantity": 50000,
-            "sortField": "sf_created_at",
-            "isAscending": False,
-            "searchString": "",
-            "filters": [],
-            "isOr": True,
-        }
+        qty = quantity if quantity is not None else settings.CRM_LEADS_QUANTITY
+        print(f"Fetching leads automatically (quantity={qty})...")
 
         try:
-
-            # =========================================
-            # CRM API REQUEST
-            # =========================================
-
-            response = self.client.put(
-                endpoint=endpoint,
-                payload=payload
+            response = self.client.fetch_leads_table(
+                page=1,
+                quantity=qty,
+                sort_field="sf_created_at",
+                is_ascending=False,
             )
 
-            print("✅ CRM response received")
-
-            # =========================================
-            # RESPONSE DEBUG
-            # =========================================
-
-            print("📄 RESPONSE:")
-            print(str(response)[:2000])
-
-            # =========================================
-            # HANDLE RESPONSE TYPES
-            # =========================================
-
-            if isinstance(response, dict):
-
-                data = response
-
-            else:
-
-                try:
-                    data = response.json()
-
-                except Exception:
-
-                    print("❌ Failed parsing JSON")
-
-                    return []
-
-            # =========================================
-            # API SUCCESS CHECK
-            # =========================================
-
-            if not data.get("success", False):
-
-                print("❌ API ERROR:")
-                print(data)
-
+            if not isinstance(response, dict) or not response.get("success", False):
+                print("API ERROR:")
+                print(response)
                 return []
 
-            # =========================================
-            # EXTRACT LEADS
-            # =========================================
+            leads = (response.get("data", {}) or {}).get("entities", []) or []
 
-            leads = (
-                data.get("data", {})
-                .get("entities", [])
-            )
-
-            print(f"✅ TOTAL LEADS FETCHED: {len(leads)}")
+            print(f"TOTAL LEADS FETCHED: {len(leads)}")
 
             return leads
 
         except Exception as e:
 
-            print(f"❌ Failed fetching leads: {e}")
+            print(f"Failed fetching leads: {e}")
 
             return []

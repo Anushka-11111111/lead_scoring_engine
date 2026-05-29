@@ -7,6 +7,33 @@ from services.analytics_service import (
 
 router = APIRouter()
 
+SCORE_BRACKETS = [
+    ("0-19", 0, 19),
+    ("20-39", 20, 39),
+    ("40-59", 40, 59),
+    ("60-79", 60, 79),
+    ("80-100", 80, 100),
+]
+
+
+def _score_distribution(leads: list) -> list:
+    distribution = []
+    for label, low, high in SCORE_BRACKETS:
+        in_bracket = [
+            lead for lead in leads
+            if low <= lead.get("score", 0) <= high
+        ]
+        companies = {
+            (lead.get("company") or "Unknown Company").strip()
+            for lead in in_bracket
+        }
+        distribution.append({
+            "bracket": label,
+            "leads": len(in_bracket),
+            "companies": len(companies),
+        })
+    return distribution
+
 
 @router.get("/analytics")
 def analytics():
@@ -49,5 +76,6 @@ def analytics():
         "cold_leads": cold,
         "average_score": avg,
         "top_leads": top_leads,
+        "score_distribution": _score_distribution(SCRAPED_LEADS),
         "status": SCRAPE_STATUS
     }
