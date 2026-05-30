@@ -1,155 +1,261 @@
 [
   {
-    "rule_id": "R1",
-    "name": "Contact Presence - Phone",
+    "rule_id": "R01",
+    "name": "Reachable Email Present",
     "category": "fit",
-    "logic": "AND",
-    "conditions": [
-      {
-        "field": "sf_phone_number.value",
-        "operator": "exists"
-      }
-    ],
-    "score": 10,
-    "description": "Lead has a recorded phone number indicating reachable contact information"
-  },
-  {
-    "rule_id": "R2",
-    "name": "Contact Presence - Email",
-    "category": "fit",
-    "logic": "AND",
-    "conditions": [
-      {
-        "field": "sf_email",
-        "operator": "exists"
-      }
-    ],
-    "score": 10,
-    "description": "Lead has a recorded email address indicating valid communication channel"
-  },
-  {
-    "rule_id": "R3",
-    "name": "Lead Recency - High Intent Window",
-    "category": "behavior",
-    "logic": "AND",
-    "conditions": [
-      {
-        "field": "sf_created_at",
-        "operator": "less_than_days",
-        "value": 7
-      }
-    ],
-    "score": 15,
-    "description": "Lead was created within the last 7 days indicating high engagement recency"
-  },
-  {
-    "rule_id": "R4",
-    "name": "Pipeline Conversion Strength",
-    "category": "behavior",
-    "logic": "AND",
-    "conditions": [
-      {
-        "field": "sf_pipeline_stage.winprobability",
-        "operator": "gt",
-        "value": 20
-      }
-    ],
-    "score": 20,
-    "description": "Pipeline-assigned win probability indicates above-threshold conversion likelihood"
-  },
-  {
-    "rule_id": "R5",
-    "name": "Acquisition Source - Facebook Attribution",
-    "category": "behavior",
     "logic": "OR",
     "conditions": [
-      {
-        "field": "sf_source.label",
-        "operator": "eq",
-        "value": "Facebook"
-      },
-      {
-        "field": "cf_lead_source.label",
-        "operator": "eq",
-        "value": "Facebook"
-      }
+      { "field": "sf_email", "operator": "exists" },
+      { "field": "email", "operator": "exists" }
     ],
-    "score": 10,
-    "description": "Lead acquisition source attributed to Facebook across CRM or custom field tracking"
+    "score": 8,
+    "description": "At least one email field is populated, enabling direct outreach."
   },
   {
-    "rule_id": "R6",
-    "name": "Data Quality Penalty - Missing Email",
-    "category": "quality",
-    "logic": "AND",
+    "rule_id": "R02",
+    "name": "Reachable Phone Present",
+    "category": "fit",
+    "logic": "OR",
     "conditions": [
-      {
-        "field": "sf_email",
-        "operator": "missing"
-      }
+      { "field": "sf_phone_number.value", "operator": "exists" },
+      { "field": "sf_phone", "operator": "exists" },
+      { "field": "phone", "operator": "exists" }
     ],
-    "score": -15,
-    "description": "Email field is missing, reducing overall lead data completeness score"
+    "score": 8,
+    "description": "At least one phone field is populated, enabling call or SMS contact."
   },
   {
-    "rule_id": "R7",
-    "name": "Contact Enrichment - Location Availability",
+    "rule_id": "R03",
+    "name": "Valid Business Email",
     "category": "quality",
     "logic": "OR",
     "conditions": [
-      {
-        "field": "sf_city",
-        "operator": "exists"
-      },
-      {
-        "field": "sf_state",
-        "operator": "exists"
-      }
+      { "field": "sf_email", "operator": "valid_email" },
+      { "field": "email", "operator": "valid_email" }
+    ],
+    "score": 12,
+    "description": "Email is present and passes format and quality checks (not test or disposable patterns)."
+  },
+  {
+    "rule_id": "R04",
+    "name": "Valid Dialable Phone",
+    "category": "quality",
+    "logic": "OR",
+    "conditions": [
+      { "field": "sf_phone_number.value", "operator": "valid_phone" },
+      { "field": "sf_phone", "operator": "valid_phone" },
+      { "field": "phone", "operator": "valid_phone" }
+    ],
+    "score": 10,
+    "description": "Phone number is present and passes length and pattern validity checks."
+  },
+  {
+    "rule_id": "R05",
+    "name": "Identity Name Present",
+    "category": "fit",
+    "logic": "OR",
+    "conditions": [
+      { "field": "sf_first_name", "operator": "exists" },
+      { "field": "sf_name", "operator": "exists" },
+      { "field": "name", "operator": "exists" },
+      { "field": "first_name", "operator": "exists" }
     ],
     "score": 5,
-    "description": "Lead contains partial or full location data enabling geographic segmentation"
+    "description": "Lead has a identifiable contact name for personalization and routing."
   },
   {
-    "rule_id": "R8",
-    "name": "Email Format Validation",
-    "category": "quality",
-    "logic": "AND",
+    "rule_id": "R06",
+    "name": "Company Profile Present",
+    "category": "fit",
+    "logic": "OR",
     "conditions": [
-      {
-        "field": "sf_email",
-        "operator": "valid_email"
-      }
+      { "field": "sf_company_name", "operator": "exists" },
+      { "field": "sf_company", "operator": "exists" },
+      { "field": "company", "operator": "exists" },
+      { "field": "company.name", "operator": "exists" }
     ],
-    "score": 15,
-    "description": "Email passes format and structural validation checks"
+    "score": 7,
+    "description": "Company or account name is present for account-based prioritization."
   },
   {
-    "rule_id": "R9",
-    "name": "Phone Number Validation",
-    "category": "quality",
-    "logic": "AND",
+    "rule_id": "R07",
+    "name": "Fresh Lead (7 Days)",
+    "category": "behavior",
+    "logic": "OR",
     "conditions": [
-      {
-        "field": "sf_phone_number.value",
-        "operator": "valid_phone"
-      }
+      { "field": "sf_created_at", "operator": "less_than_days", "value": 7 },
+      { "field": "created_at", "operator": "less_than_days", "value": 7 }
     ],
     "score": 15,
-    "description": "Phone number passes format and validity checks for dialable contact"
+    "description": "Lead was created within the last 7 days, indicating high timeliness and response potential."
+  },
+  {
+    "rule_id": "R08",
+    "name": "Recent Engagement (14 Days)",
+    "category": "behavior",
+    "logic": "OR",
+    "conditions": [
+      { "field": "sf_latest_activity_on", "operator": "less_than_days", "value": 14 },
+      { "field": "sf_latest_activity_day_at", "operator": "less_than_days", "value": 14 },
+      { "field": "latest_activity_on", "operator": "less_than_days", "value": 14 }
+    ],
+    "score": 12,
+    "description": "Last activity occurred within 14 days, suggesting active interest or ongoing conversation."
+  },
+  {
+    "rule_id": "R09",
+    "name": "Pipeline Moderate Intent",
+    "category": "behavior",
+    "logic": "OR",
+    "conditions": [
+      { "field": "sf_pipeline_stage.winprobability", "operator": "gte", "value": 30 },
+      { "field": "pipeline_stage.winprobability", "operator": "gte", "value": 30 },
+      { "field": "winprobability", "operator": "gte", "value": 30 }
+    ],
+    "score": 10,
+    "description": "Pipeline win probability is at least 30%, showing meaningful sales-stage progress."
   },
   {
     "rule_id": "R10",
-    "name": "Geo-Market Value Tier",
+    "name": "Pipeline High Intent",
+    "category": "behavior",
+    "logic": "OR",
+    "conditions": [
+      { "field": "sf_pipeline_stage.winprobability", "operator": "gte", "value": 60 },
+      { "field": "pipeline_stage.winprobability", "operator": "gte", "value": 60 },
+      { "field": "winprobability", "operator": "gte", "value": 60 }
+    ],
+    "score": 18,
+    "description": "Pipeline win probability is at least 60%, indicating strong near-term conversion potential."
+  },
+  {
+    "rule_id": "R11",
+    "name": "Recognized Inbound Source",
+    "category": "behavior",
+    "logic": "OR",
+    "conditions": [
+      { "field": "sf_source.label", "operator": "contains", "value": "referral" },
+      { "field": "sf_source.label", "operator": "contains", "value": "organic" },
+      { "field": "sf_source.label", "operator": "contains", "value": "website" },
+      { "field": "sf_source.label", "operator": "contains", "value": "web" },
+      { "field": "sf_source.label", "operator": "contains", "value": "inbound" },
+      { "field": "sf_source.label", "operator": "contains", "value": "partner" },
+      { "field": "cf_lead_source.label", "operator": "contains", "value": "referral" },
+      { "field": "cf_lead_source.label", "operator": "contains", "value": "organic" },
+      { "field": "source", "operator": "contains", "value": "referral" },
+      { "field": "lead_source", "operator": "contains", "value": "inbound" }
+    ],
+    "score": 10,
+    "description": "Acquisition source indicates inbound or high-intent channels (referral, organic, web, partner)."
+  },
+  {
+    "rule_id": "R12",
+    "name": "Paid or Social Acquisition",
+    "category": "behavior",
+    "logic": "OR",
+    "conditions": [
+      { "field": "sf_source.label", "operator": "contains", "value": "facebook" },
+      { "field": "sf_source.label", "operator": "contains", "value": "google" },
+      { "field": "sf_source.label", "operator": "contains", "value": "linkedin" },
+      { "field": "sf_source.label", "operator": "contains", "value": "instagram" },
+      { "field": "sf_source.label", "operator": "contains", "value": "ads" },
+      { "field": "cf_lead_source.label", "operator": "contains", "value": "facebook" },
+      { "field": "cf_lead_source.label", "operator": "contains", "value": "google" },
+      { "field": "source", "operator": "contains", "value": "paid" }
+    ],
+    "score": 6,
+    "description": "Lead originated from a trackable paid or social campaign (useful for attribution and follow-up speed)."
+  },
+  {
+    "rule_id": "R13",
+    "name": "Geographic Profile Complete",
+    "category": "quality",
+    "logic": "OR",
+    "conditions": [
+      { "field": "sf_city", "operator": "exists" },
+      { "field": "sf_state", "operator": "exists" },
+      { "field": "sf_country", "operator": "exists" },
+      { "field": "city", "operator": "exists" },
+      { "field": "state", "operator": "exists" },
+      { "field": "country", "operator": "exists" }
+    ],
+    "score": 6,
+    "description": "At least one geographic field is present for territory routing and regional prioritization."
+  },
+  {
+    "rule_id": "R14",
+    "name": "High-Value Market",
     "category": "fit",
     "logic": "OR",
     "conditions": [
       {
         "field": "sf_country",
         "operator": "in",
-        "value": ["USA", "UK", "Canada"]
+        "value": [
+          "USA",
+          "US",
+          "United States",
+          "UK",
+          "United Kingdom",
+          "GB",
+          "Canada",
+          "Germany",
+          "Australia",
+          "France",
+          "Netherlands",
+          "Singapore",
+          "UAE",
+          "United Arab Emirates",
+          "India"
+        ]
+      },
+      {
+        "field": "country",
+        "operator": "in",
+        "value": [
+          "USA",
+          "US",
+          "United States",
+          "UK",
+          "United Kingdom",
+          "GB",
+          "Canada",
+          "Germany",
+          "Australia",
+          "France",
+          "Netherlands",
+          "Singapore",
+          "UAE",
+          "United Arab Emirates",
+          "India"
+        ]
       }
     ],
-    "score": 20,
-    "description": "Lead originates from high-value enterprise markets with strong conversion potential"
+    "score": 12,
+    "description": "Lead country matches a defined high-priority sales market."
+  },
+  {
+    "rule_id": "R15",
+    "name": "Dual Contact Channels",
+    "category": "fit",
+    "logic": "AND",
+    "conditions": [
+      { "field": "sf_email", "operator": "exists" },
+      { "field": "sf_phone_number.value", "operator": "exists" }
+    ],
+    "score": 10,
+    "description": "Both email and phone are on file (Togile primary fields), maximizing reachability across channels."
+  },
+  {
+    "rule_id": "R16",
+    "name": "Dual Contact Channels (Generic)",
+    "category": "fit",
+    "logic": "AND",
+    "conditions": [
+      { "field": "email", "operator": "exists" },
+      { "field": "phone", "operator": "exists" }
+    ],
+    "score": 10,
+    "description": "Both generic email and phone fields are populated for multi-channel outreach."
   }
 ]

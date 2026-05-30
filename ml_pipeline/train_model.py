@@ -47,6 +47,26 @@ def load_training_data() -> pd.DataFrame:
             pd.Timestamp.now() - labeled["created_at"]
         ).dt.days.fillna(0).astype(int)
 
+    for col in NUMERIC_FEATURES:
+        if col in labeled.columns:
+            labeled[col] = pd.to_numeric(labeled[col], errors="coerce").fillna(0.0)
+
+    for col in CATEGORICAL_FEATURES:
+        if col in labeled.columns:
+            labeled[col] = labeled[col].astype(str).str.strip().replace("", "unknown")
+
+    if "days_since_first_contact" in labeled.columns:
+        labeled["lead_age_bucket"] = pd.cut(
+            labeled["days_since_first_contact"],
+            bins=[-1, 3, 7, 14, 30, 999],
+            labels=["0-3", "4-7", "8-14", "15-30", "30+"],
+        ).astype(str)
+
+    if "estimated_budget" in labeled.columns and "company_size" in labeled.columns:
+        labeled["budget_per_size"] = (
+            labeled["estimated_budget"] / (labeled["company_size"] + 1)
+        )
+
     required_cols = CATEGORICAL_FEATURES + NUMERIC_FEATURES + ["converted"]
 
     available = [c for c in required_cols if c in labeled.columns]

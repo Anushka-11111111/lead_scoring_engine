@@ -7,7 +7,7 @@ from intelligence.signal_builder import SignalBuilder
 from rules_engine.rule_parser import RuleParser
 from rules_engine.rule_executor import RuleExecutor
 from scoring.fusion_layer import FusionLayer
-from scoring.ml_refinement import MLRefinementLayer
+from services.ml_service import record_completed_lead, score_with_ml
 
 
 def _lead_display_fields(lead: Dict[str, Any]) -> Dict[str, str]:
@@ -49,7 +49,6 @@ def score_lead(lead: Dict[str, Any]) -> Dict[str, Any]:
     quality_layer = FeatureQualityLayer()
     signal_builder = SignalBuilder()
     fusion = FusionLayer()
-    ml_refiner = MLRefinementLayer()
     rules = RuleParser().load_rules("rules.json")
     executor = RuleExecutor()
 
@@ -64,22 +63,41 @@ def score_lead(lead: Dict[str, Any]) -> Dict[str, Any]:
     label = result.get("classification", "Cold Lead")
     breakdown = result.get("breakdown", "")
 
-    ml_out = ml_refiner.refine(observations, rule_score, debug=True)
-    ml_prob = round(ml_out["ml_probability"] * 100, 1)
+    ml_out = score_with_ml(observations, rule_score, label, lead=lead)
+    record_completed_lead(
+        lead_id=display["lead_id"],
+        observations=observations,
+        rule_score=rule_score,
+        label=label,
+        lead=lead,
+    )
+
+    ml_explanation = ml_out.get("ml_reasoning") or ""
+    if ml_out.get("ml_warning"):
+        ml_explanation = f"{ml_out['ml_warning']}\n\n{ml_explanation}".strip()
 
     return {
         **display,
         "score": rule_score,
         "label": label,
         "breakdown": breakdown,
-        "ml_probability": ml_prob,
+        "ml_score": ml_out.get("ml_score"),
+        "ml_probability": ml_out.get("ml_probability"),
+        "ml_label": ml_out.get("ml_label"),
         "ml_confidence_level": ml_out.get("ml_confidence_level", "Low"),
+        "ml_reasoning": ml_out.get("ml_reasoning"),
+        "ml_warning": ml_out.get("ml_warning"),
+        "ml_active": ml_out.get("ml_active", False),
         "crm_payload": {
             "ai_lead_score_test": rule_score,
             "ai_label_test": label,
             "ai_confidence_test": int(rule_score),
             "ai_explanation_test": breakdown,
-            "ml_conversion_probability": ml_prob,
+            "ml_conversion_probability": ml_out.get("ml_probability"),
+            "ml_score": ml_out.get("ml_score"),
+            "ml_label": ml_out.get("ml_label"),
             "ml_confidence_level": ml_out.get("ml_confidence_level", "Low"),
+            "ml_explanation_test": ml_explanation,
+            "ml_warning": ml_out.get("ml_warning"),
         },
     }

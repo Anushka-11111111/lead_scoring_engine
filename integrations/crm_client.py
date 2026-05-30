@@ -44,13 +44,19 @@ class CRMClient:
 
     @classmethod
     def from_settings(cls) -> "CRMClient":
-        from core_contracts.settings import settings
+        from services.crm_config_store import CRMNotConfiguredError, get_crm_credentials
+
+        creds = get_crm_credentials()
+        if not creds:
+            raise CRMNotConfiguredError(
+                "CRM is not configured. Enter API key, secret key, base URL, and origin in Settings."
+            )
 
         return cls(
-            base_url=settings.CRM_BASE_URL,
-            api_key=settings.CRM_API_KEY,
-            secret_key=settings.CRM_SECRET_KEY,
-            origin=settings.CRM_ORIGIN,
+            base_url=creds["base_url"],
+            api_key=creds["api_key"],
+            secret_key=creds["secret_key"],
+            origin=creds["origin"],
         )
 
     def put(self, endpoint: str, payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -79,6 +85,34 @@ class CRMClient:
             }
         except Exception as exc:
             logger.error("CRM PUT %s failed: %s", url, exc)
+            return {"success": False, "error": str(exc)}
+
+    def post(self, endpoint: str, payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        url = f"{self.base_url}{endpoint}"
+
+        try:
+            with httpx.Client(timeout=self.timeout, follow_redirects=True) as client:
+                response = client.post(
+                    url,
+                    headers=self._json_headers,
+                    json=payload or {},
+                )
+                response.raise_for_status()
+                return response.json()
+        except httpx.HTTPStatusError as exc:
+            logger.error(
+                "CRM POST %s failed (%s): %s",
+                url,
+                exc.response.status_code,
+                exc.response.text[:500],
+            )
+            return {
+                "success": False,
+                "error": str(exc),
+                "status_code": exc.response.status_code,
+            }
+        except Exception as exc:
+            logger.error("CRM POST %s failed: %s", url, exc)
             return {"success": False, "error": str(exc)}
 
     def get(self, endpoint: str) -> Dict[str, Any]:

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 
-from integrations.crm_client import CRMClient
+from api.routes.config import require_crm_client
 from api.routes.score import _extract_lead_record
 from services.analytics_service import SCRAPED_LEADS
 from services.lead_scorer import score_lead
@@ -20,7 +20,7 @@ def get_all_leads():
 
 @router.get("/leads/{lead_id}")
 def get_lead_detail(lead_id: str):
-    client = CRMClient.from_settings()
+    client = require_crm_client()
     response = client.fetch_lead(lead_id)
     lead = _extract_lead_record(response)
 

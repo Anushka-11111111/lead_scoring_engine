@@ -61,40 +61,22 @@ class FusionLayer:
         # rule influence.
         # ==================================================
         self.rule_multipliers = {
-
-            "High Pipeline Probability": 1.4,
-
-            "Has Email": 1.15,
-
-            "Has Phone": 1.15,
-
-            "Facebook Source": 0.9,
-
-            "Valid Email": 1.25,
-
-            "Valid Phone": 1.25,
-
-            "High Value Geography": 1.3
+            "Pipeline High Intent": 1.45,
+            "Pipeline Moderate Intent": 1.2,
+            "Fresh Lead (7 Days)": 1.25,
+            "Recent Engagement (14 Days)": 1.2,
+            "Reachable Email Present": 1.1,
+            "Reachable Phone Present": 1.1,
+            "Valid Business Email": 1.3,
+            "Valid Dialable Phone": 1.25,
+            "High-Value Market": 1.25,
+            "Recognized Inbound Source": 1.1,
+            "Paid or Social Acquisition": 1.0,
+            "Dual Contact Channels": 1.15,
+            "Dual Contact Channels (Generic)": 1.15,
         }
 
-        # ==================================================
-        # ❌ STATIC PENALTIES
-        # ==================================================
-        #
-        # Negative signals directly reduce score.
-        #
-        # Example:
-        # Missing contact information
-        # is a strong sales blocker.
-        # ==================================================
-        self.penalties = {
-
-            "Missing Email": -15,
-
-            "Invalid Email": -10,
-
-            "Invalid Phone": -10
-        }
+        self.penalties = {}
 
         # ==================================================
         # 🧠 RULE → FEATURE QUALITY MAPPING
@@ -107,30 +89,21 @@ class FusionLayer:
         # quality-aware scoring
         # ==================================================
         self.rule_quality_map = {
-
-            "Has Email": [
-                "sf_email"
+            "Reachable Email Present": ["sf_email", "email"],
+            "Reachable Phone Present": [
+                "sf_phone_number.value",
+                "sf_phone",
+                "phone",
             ],
-
-            "Has Phone": [
-                "sf_phone_number.value"
+            "Fresh Lead (7 Days)": ["sf_created_at", "created_at"],
+            "Recent Engagement (14 Days)": [
+                "sf_latest_activity_on",
+                "sf_latest_activity_day_at",
             ],
-
-            "Recent Lead": [
-                "sf_created_at"
-            ],
-
-            "High Pipeline Probability": [
-                "sf_pipeline_stage.winprobability"
-            ],
-
-            "Valid Email": [
-                "sf_email"
-            ],
-
-            "Valid Phone": [
-                "sf_phone_number.value"
-            ]
+            "Pipeline High Intent": ["sf_pipeline_stage.winprobability"],
+            "Pipeline Moderate Intent": ["sf_pipeline_stage.winprobability"],
+            "Valid Business Email": ["sf_email", "email"],
+            "Valid Dialable Phone": ["sf_phone_number.value", "phone"],
         }
 
         # ==================================================

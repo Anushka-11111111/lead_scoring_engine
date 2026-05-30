@@ -2,6 +2,7 @@ from fastapi import APIRouter
 from pydantic import BaseModel, Field
 from threading import Thread
 
+from api.routes.config import require_crm_client
 from services.scraping_service import ScrapingService
 
 router = APIRouter()
@@ -13,6 +14,7 @@ class SyncRequest(BaseModel):
 
 @router.post("/start-sync")
 def start_sync(body: SyncRequest = SyncRequest()):
+    require_crm_client()
 
     service = ScrapingService()
 

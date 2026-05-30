@@ -3,11 +3,12 @@ from services.analytics_service import (
     SCRAPED_LEADS,
     SCRAPE_STATUS
 )
+from services.ml_service import maybe_trigger_training
 
 
 def run(leads, pusher=None):
 
-    print("🧠 AI ENGINE STARTED")
+    print("AI ENGINE STARTED")
 
     # =========================
     # RESET DASHBOARD STATE
@@ -38,7 +39,11 @@ def run(leads, pusher=None):
                 "company": scored["company"],
                 "score": scored["score"],
                 "label": scored["label"],
-                "ml_probability": scored["ml_probability"],
+                "ml_score": scored.get("ml_score"),
+                "ml_probability": scored.get("ml_probability"),
+                "ml_label": scored.get("ml_label"),
+                "ml_active": scored.get("ml_active", False),
+                "ml_warning": scored.get("ml_warning"),
             })
 
             processed += 1
@@ -62,6 +67,8 @@ def run(leads, pusher=None):
     SCRAPE_STATUS["running"] = False
     SCRAPE_STATUS["completed"] = True
 
-    print(f"🔥 TOTAL PROCESSED: {processed}")
+    maybe_trigger_training()
+
+    print(f"TOTAL PROCESSED: {processed}")
 
     return processed

@@ -4,6 +4,7 @@ from services.analytics_service import (
     SCRAPED_LEADS,
     SCRAPE_STATUS
 )
+from services.ml_service import get_ml_status
 
 router = APIRouter()
 
@@ -77,5 +78,6 @@ def analytics():
         "average_score": avg,
         "top_leads": top_leads,
         "score_distribution": _score_distribution(SCRAPED_LEADS),
-        "status": SCRAPE_STATUS
+        "status": SCRAPE_STATUS,
+        "ml_status": get_ml_status(),
     }

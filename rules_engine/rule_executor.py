@@ -1,4 +1,6 @@
 from typing import List
+import re
+
 from rules_engine.condition_evaluator import ConditionEvaluator
 from core_contracts.rule_trigger import RuleTrigger
 
@@ -221,7 +223,7 @@ class RuleExecutor:
         - Scoring optimization
         """
 
-        print("\n🔍 ===== DYNAMIC RULE DEBUGGER =====\n")
+        print("\n===== DYNAMIC RULE DEBUGGER =====\n")
 
         triggers = []
 
@@ -316,17 +318,17 @@ class RuleExecutor:
                 rule.logic
             )
 
-            print(f"\n   🧠 FINAL RULE MATCH: {final}")
+            print(f"\n   FINAL RULE MATCH: {final}")
 
             # --------------------------------------------------
             # Trigger rule if successful
             # --------------------------------------------------
             if final:
 
-                print(f"   ✅ RULE TRIGGERED")
+                print(f"   RULE TRIGGERED")
 
                 print(
-                    f"   🎯 FINAL SCORE: "
+                    f"   FINAL SCORE: "
                     f"{dynamic_score:.2f}"
                 )
 
@@ -345,9 +347,9 @@ class RuleExecutor:
                 )
 
             else:
-                print(f"   ❌ RULE NOT TRIGGERED")
+                print(f"   RULE NOT TRIGGERED")
 
-        print("\n🔍 ===== DEBUG END =====\n")
+        print("\n===== DEBUG END =====\n")
 
         return triggers
 
@@ -383,108 +385,50 @@ class RuleExecutor:
 
         try:
 
-            # ==================================================
             # HIGH PIPELINE PROBABILITY
-            # ==================================================
-            if rule_name == "High Pipeline Probability":
-
+            if rule_name in ("Pipeline High Intent", "Pipeline Moderate Intent"):
                 probability = float(value)
+                cap = 22 if rule_name == "Pipeline High Intent" else 14
+                return min(8 + (probability * 0.35), cap)
 
-                # --------------------------------------------------
-                # Continuous scaling formula
-                #
-                # Example:
-                # 50 → 30
-                # 80 → 35
-                # --------------------------------------------------
-                return min(
-                    10 + (probability * 0.4),
-                    35
-                )
-
-            # ==================================================
-            # RECENT LEAD SCORING
-            # ==================================================
-            if rule_name == "Recent Lead":
-
+            # RECENT LEAD / ACTIVITY
+            if rule_name in ("Fresh Lead (7 Days)", "Recent Engagement (14 Days)"):
                 from datetime import datetime
 
                 created = datetime.fromisoformat(
                     str(value).replace("Z", "")
                 )
+                days_old = (datetime.utcnow() - created).days
+                freshness = max(0, 14 - days_old)
+                cap = 20 if rule_name == "Fresh Lead (7 Days)" else 16
+                return min(8 + freshness, cap)
 
-                # Lead age in days
-                days_old = (
-                    datetime.utcnow() - created
-                ).days
-
-                # Fresher leads receive higher scores
-                freshness = max(0, 10 - days_old)
-
-                return min(
-                    10 + freshness,
-                    20
-                )
-
-            # ==================================================
-            # VALID EMAIL BOOST
-            # ==================================================
-            if rule_name == "Valid Email":
-
+            # VALID EMAIL
+            if rule_name == "Valid Business Email":
                 email = str(value).lower()
-
-                # Free/public email providers
-                #
-                # Lower business intent
                 if any(
                     x in email
-                    for x in [
-                        "gmail",
-                        "yahoo",
-                        "hotmail"
-                    ]
+                    for x in ["gmail", "yahoo", "hotmail", "outlook.com"]
                 ):
                     return 10
+                return 16
 
-                # Business email domains
-                return 18
-
-            # ==================================================
-            # VALID PHONE BOOST
-            # ==================================================
-            if rule_name == "Valid Phone":
-
-                phone = str(value)
-
-                # International/business numbers
+            # VALID PHONE
+            if rule_name == "Valid Dialable Phone":
+                phone = re.sub(r"\D", "", str(value))
                 if len(phone) >= 12:
-                    return 18
+                    return 14
+                return 10
 
-                return 12
-
-            # ==================================================
-            # HIGH VALUE GEO TARGETING
-            # ==================================================
-            if rule_name == "High Value Geography":
-
+            # HIGH-VALUE MARKET
+            if rule_name == "High-Value Market":
                 country = str(value).lower()
-
-                # Premium markets
-                if country in [
-                    "usa",
-                    "united states"
-                ]:
-                    return 25
-
-                if country in [
-                    "uk",
-                    "united kingdom"
-                ]:
-                    return 22
-
-                if country == "canada":
-                    return 20
-
+                tier_a = ["usa", "united states", "us", "u.s."]
+                tier_b = ["uk", "united kingdom", "gb", "canada", "germany", "australia"]
+                if any(c in country for c in tier_a):
+                    return 16
+                if any(c in country for c in tier_b):
+                    return 13
                 return base_score
 
         # --------------------------------------------------

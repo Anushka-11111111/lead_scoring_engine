@@ -1,4 +1,4 @@
-import { X, Flame, Snowflake, BrainCircuit } from "lucide-react";
+import { X, Flame, Snowflake, BrainCircuit, AlertTriangle } from "lucide-react";
 
 function scoreTone(score) {
   if (score >= 80) return "hot";
@@ -13,13 +13,16 @@ const toneStyles = {
 };
 
 export default function LeadDetailModal({ lead, loading, error, onClose }) {
+  const mlScore = lead?.ml_score;
+  const mlActive = lead?.ml_active && mlScore != null;
+
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/55 backdrop-blur-md"
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col"
+        className="bg-white rounded-3xl shadow-2xl shadow-blue-900/10 w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col border border-blue-100"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
@@ -49,29 +52,50 @@ export default function LeadDetailModal({ lead, loading, error, onClose }) {
 
           {!loading && !error && lead && (
             <>
+              {lead.ml_warning && (
+                <div className="rounded-2xl border border-amber-300 bg-amber-50 px-5 py-4 text-amber-900 flex gap-3">
+                  <AlertTriangle className="shrink-0 mt-0.5" size={18} />
+                  <p className="text-sm">{lead.ml_warning}</p>
+                </div>
+              )}
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className={`rounded-2xl border p-5 ${toneStyles[scoreTone(lead.score)]}`}>
                   <p className="text-sm font-medium opacity-80">Rule score</p>
                   <p className="text-4xl font-bold mt-1">{lead.score}</p>
                 </div>
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-                  <p className="text-sm text-slate-500">Classification</p>
+                  <p className="text-sm text-slate-500">Rule classification</p>
                   <p className="text-xl font-bold mt-1 text-slate-900">{lead.label}</p>
                 </div>
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                <div className={`rounded-2xl border p-5 ${mlActive ? "border-blue-200 bg-blue-50" : "border-slate-200 bg-slate-50"}`}>
                   <p className="text-sm text-slate-500 flex items-center gap-1">
-                    <BrainCircuit size={16} /> ML probability
+                    <BrainCircuit size={16} /> ML score
                   </p>
                   <p className="text-4xl font-bold mt-1 text-blue-700">
-                    {lead.ml_probability}%
+                    {mlActive ? mlScore : "—"}
                   </p>
+                  {mlActive && (
+                    <p className="text-sm text-slate-600 mt-1">
+                      {lead.ml_label} · {lead.ml_confidence_level} confidence
+                    </p>
+                  )}
                 </div>
               </div>
 
               <div className="rounded-2xl bg-[#dbeafe] p-5">
-                <h3 className="font-bold text-lg mb-2">Score breakdown</h3>
+                <h3 className="font-bold text-lg mb-2">Rule score breakdown</h3>
                 <p className="text-slate-700 whitespace-pre-wrap">
                   {lead.breakdown || "No rule breakdown available."}
+                </p>
+              </div>
+
+              <div className="rounded-2xl bg-slate-50 border border-slate-200 p-5">
+                <h3 className="font-bold text-lg mb-2 flex items-center gap-2">
+                  <BrainCircuit size={18} /> ML reasoning
+                </h3>
+                <p className="text-slate-700 whitespace-pre-wrap">
+                  {lead.ml_reasoning || "ML reasoning will appear once the model is trained on 100+ completed leads."}
                 </p>
               </div>
 

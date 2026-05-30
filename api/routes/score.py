@@ -1,8 +1,9 @@
 from fastapi import APIRouter, HTTPException
 
-from integrations.crm_client import CRMClient
+from api.routes.config import require_crm_client
 from services.lead_scorer import score_lead
 from services.analytics_service import SCRAPED_LEADS
+from services.ml_service import maybe_trigger_training
 
 router = APIRouter(tags=["Scoring"])
 
@@ -27,7 +28,7 @@ def score_single_lead(lead_id: str, update_dashboard: bool = True):
 
     lead_id: Togile sf_id (e.g. 518029) or CRM _id string.
     """
-    client = CRMClient.from_settings()
+    client = require_crm_client()
     response = client.fetch_lead(lead_id)
     lead = _extract_lead_record(response)
 
@@ -38,6 +39,8 @@ def score_single_lead(lead_id: str, update_dashboard: bool = True):
         )
 
     result = score_lead(lead)
+
+    maybe_trigger_training()
 
     if update_dashboard:
         existing = next(
@@ -50,7 +53,11 @@ def score_single_lead(lead_id: str, update_dashboard: bool = True):
             "company": result["company"],
             "score": result["score"],
             "label": result["label"],
-            "ml_probability": result["ml_probability"],
+            "ml_score": result.get("ml_score"),
+            "ml_probability": result.get("ml_probability"),
+            "ml_label": result.get("ml_label"),
+            "ml_active": result.get("ml_active", False),
+            "ml_warning": result.get("ml_warning"),
         }
         if existing is not None:
             SCRAPED_LEADS[existing] = dashboard_row

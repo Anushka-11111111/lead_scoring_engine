@@ -19,4 +19,15 @@ export const EMPTY_ANALYTICS = {
     current_lead: null,
     completed: false,
   },
+  ml_status: {
+    completed_leads: 0,
+    training_threshold: 100,
+    mature_threshold: 3000,
+    model_loaded: false,
+    model_version: null,
+    training_in_progress: false,
+    warning: null,
+    ready_for_training: false,
+    mature: false,
+  },
 };

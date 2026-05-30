@@ -9,7 +9,7 @@ class ScrapingService:
 
     def start(self, quantity: int | None = None):
 
-        print("🚀 API Sync Service Started")
+        print("API Sync Service Started")
 
         client = CRMClient.from_settings()
 
@@ -19,11 +19,11 @@ class ScrapingService:
 
         leads = fetcher.fetch_leads(quantity=quantity)
 
-        print(f"📦 Leads fetched: {len(leads)}")
+        print(f"Leads fetched: {len(leads)}")
 
         run(
             leads=leads,
             pusher=pusher
         )
 
-        print("✅ Sync completed successfully")
+        print("Sync completed successfully")
