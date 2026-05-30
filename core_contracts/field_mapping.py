@@ -1,182 +1,64 @@
-# ==========================================================
-# FIELD MAPPING CONFIGURATION
-# ==========================================================
-#
-# Purpose:
-# This configuration acts as the central metadata registry
-# for all CRM fields used inside the lead scoring system.
-#
-# It standardizes:
-# - Signal classification
-# - Feature categorization
-# - Signal importance/weighting
-#
-# Why this layer matters:
-# Instead of hardcoding logic everywhere, the system can
-# dynamically understand:
-#
-#   "What kind of signal is this?"
-#   "How important is it?"
-#   "Which business category does it belong to?"
-#
-# This makes the scoring engine:
-# - Modular
-# - Config-driven
-# - Easier to scale
-# - Easier to maintain
-#
-# Example:
-# "sf_email" →
-#     identity signal
-#     email signal type
-#     weight = 10
-#
-# The scoring engine can later use this metadata to:
-# - Assign scores
-# - Generate explanations
-# - Build ML features
-# - Trigger rules dynamically
-# ==========================================================
+# Central registry of CRM fields that participate in rule scoring.
+# Multiple aliases cover Togile (sf_*) and generic CRM payloads.
+
+def _entry(signal_type: str, category: str, weight: int) -> dict:
+    return {
+        "signal_type": signal_type,
+        "category": category,
+        "weight": weight,
+    }
+
+
+_EMAIL = _entry("email_signal", "identity", 10)
+_PHONE = _entry("phone_signal", "identity", 10)
+_NAME = _entry("identity_signal", "identity", 6)
+_COMPANY = _entry("company_signal", "identity", 8)
+_CREATED = _entry("lead_recency_signal", "temporal", 15)
+_ACTIVITY = _entry("activity_recency_signal", "temporal", 20)
+_PIPELINE = _entry("conversion_probability_signal", "intent", 25)
+_SOURCE = _entry("acquisition_channel_signal", "marketing", 10)
+_LOCATION = _entry("location_signal", "demographic", 5)
 
 FIELD_MAPPING = {
-
-    # ======================================================
-    # 🪪 IDENTITY SIGNALS
-    # ======================================================
-    # Signals used to identify or validate a lead.
-    # These are foundational trust signals.
-    # ======================================================
-
-    "sf_email": {
-
-        # Internal signal classification
-        "signal_type": "email_signal",
-
-        # High-level business category
-        "category": "identity",
-
-        # Relative importance in scoring
-        "weight": 10
-    },
-
-    "sf_phone_number.value": {
-
-        "signal_type": "phone_signal",
-
-        "category": "identity",
-
-        "weight": 10
-    },
-
-    # ======================================================
-    # ⏳ TEMPORAL SIGNALS
-    # ======================================================
-    # Signals related to timing and recency.
-    #
-    # These help determine:
-    # - Lead freshness
-    # - Engagement recency
-    # - Active buying intent
-    # ======================================================
-
-    "sf_created_at": {
-
-        # When the lead was originally created
-        "signal_type": "lead_recency_signal",
-
-        "category": "temporal",
-
-        "weight": 15
-    },
-
-    "sf_latest_activity_on": {
-
-        # Most recent interaction/activity timestamp
-        "signal_type": "activity_recency_signal",
-
-        "category": "temporal",
-
-        # Higher importance because recent activity
-        # is usually a strong intent signal
-        "weight": 20
-    },
-
-    # ======================================================
-    # 📈 PIPELINE / INTENT SIGNALS
-    # ======================================================
-    # Signals representing sales pipeline quality,
-    # buying intent, or conversion likelihood.
-    # ======================================================
-
-    "sf_pipeline_stage.winprobability": {
-
-        # CRM-estimated conversion probability
-        "signal_type": "conversion_probability_signal",
-
-        "category": "intent",
-
-        # High weight because this is often one of
-        # the strongest indicators of conversion intent
-        "weight": 25
-    },
-
-    # ======================================================
-    # 📣 SOURCE / MARKETING SIGNALS
-    # ======================================================
-    # Acquisition channel signals.
-    #
-    # Useful for:
-    # - Attribution analysis
-    # - Marketing quality analysis
-    # - Campaign optimization
-    # ======================================================
-
-    "sf_source.label": {
-
-        "signal_type": "acquisition_channel_signal",
-
-        "category": "marketing",
-
-        "weight": 10
-    },
-
-    "cf_lead_source.label": {
-
-        "signal_type": "acquisition_channel_signal",
-
-        "category": "marketing",
-
-        "weight": 10
-    },
-
-    # ======================================================
-    # 🌍 LOCATION / DEMOGRAPHIC SIGNALS
-    # ======================================================
-    # Geographic enrichment signals.
-    #
-    # Useful for:
-    # - Territory routing
-    # - ICP matching
-    # - Geo-based prioritization
-    # ======================================================
-
-    "sf_city": {
-
-        "signal_type": "location_signal",
-
-        "category": "demographic",
-
-        # Lower weight because location alone
-        # is usually not a strong conversion signal
-        "weight": 5
-    },
-
-    "sf_state": {
-
-        "signal_type": "location_signal",
-
-        "category": "demographic",
-
-        "weight": 5
-    }
+    # Email
+    "sf_email": _EMAIL,
+    "email": _EMAIL,
+    # Phone
+    "sf_phone_number.value": _PHONE,
+    "sf_phone": _PHONE,
+    "phone": _PHONE,
+    # Name
+    "sf_first_name": _NAME,
+    "sf_name": _NAME,
+    "name": _NAME,
+    "first_name": _NAME,
+    # Company
+    "sf_company_name": _COMPANY,
+    "sf_company": _COMPANY,
+    "company": _COMPANY,
+    "company.name": _COMPANY,
+    # Created / activity
+    "sf_created_at": _CREATED,
+    "created_at": _CREATED,
+    "createdat": _CREATED,
+    "sf_latest_activity_on": _ACTIVITY,
+    "sf_latest_activity_day_at": _ACTIVITY,
+    "latest_activity_on": _ACTIVITY,
+    # Pipeline
+    "sf_pipeline_stage.winprobability": _PIPELINE,
+    "pipeline_stage.winprobability": _PIPELINE,
+    "winprobability": _PIPELINE,
+    # Source
+    "sf_source.label": _SOURCE,
+    "sf_source.value": _SOURCE,
+    "cf_lead_source.label": _SOURCE,
+    "source": _SOURCE,
+    "lead_source": _SOURCE,
+    # Location
+    "sf_city": _LOCATION,
+    "sf_state": _LOCATION,
+    "sf_country": _LOCATION,
+    "city": _LOCATION,
+    "state": _LOCATION,
+    "country": _LOCATION,
 }

@@ -49,7 +49,6 @@ from scoring.ml_scorer import calculate_ml_score
 # --- CRM IMPORTS ---
 
 from integrations.crm_client import CRMClient
-from integrations.auth import CRMAuth
 
 # =========================================
 # LOGGING
@@ -163,12 +162,7 @@ def run(context):
 
     logger.info("🧠 AI Lead Scoring Engine Started")
 
-    auth = CRMAuth()
-
-    client = CRMClient(
-        base_url="https://api.togile.com",
-        auth=auth
-    )
+    client = CRMClient.from_settings()
 
     fetcher = LeadFetcher(client)
 
@@ -495,12 +489,7 @@ def start_sync():
 
     try:
 
-        auth = CRMAuth()
-
-        client = CRMClient(
-            base_url="https://api.togile.com",
-            auth=auth
-        )
+        client = CRMClient.from_settings()
 
         fetcher = LeadFetcher(client)
 

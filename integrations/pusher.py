@@ -50,7 +50,7 @@ class ScorePusher:
 
             score_payload:
                 Final scoring object
-                (LeadScore / FinalScore).
+                (LeadScore / FinalScore / dict).
 
         Returns:
             dict:
@@ -58,63 +58,39 @@ class ScorePusher:
         """
 
         # --------------------------------------------------
-        # CRM endpoint for score updates
-        #
-        # Example:
-        # /leads/123/score
+        # CRM endpoint for score updates (prefixed with /api/v1)
         # --------------------------------------------------
-        endpoint = f"/leads/{lead_id}/score"
+        endpoint = f"/api/v1/leads/{lead_id}/score"
 
         # --------------------------------------------------
         # Request payload sent to CRM
         # --------------------------------------------------
-        body = {
+        if isinstance(score_payload, dict):
+            # If the payload is already a dictionary formatted as crm_payload
+            body = score_payload
+        else:
+            # Fallback for LeadScore/FinalScore dataclasses
+            body = {
+                # Final aggregated lead score
+                "score": getattr(score_payload, "total_score", 0),
 
-            # Final aggregated lead score
-            "score": score_payload.total_score,
+                # Lead classification
+                "classification": getattr(score_payload, "classification", "Cold Lead"),
 
-            # Lead classification
-            # Example:
-            # hot / warm / cold
-            "classification": score_payload.classification,
+                # Confidence/reliability score
+                "confidence": getattr(score_payload, "confidence", 0),
 
-            # Confidence/reliability score
-            "confidence": score_payload.confidence,
+                # Detailed scoring breakdown
+                "breakdown": {
+                    "fit": getattr(score_payload, "fit_score", 0),
+                    "behavior": getattr(score_payload, "behavior_score", 0),
+                    "quality": getattr(score_payload, "quality_score", 0),
+                    "penalty": getattr(score_payload, "penalty_score", 0)
+                },
 
-            # ----------------------------------------------
-            # Detailed scoring breakdown
-            #
-            # Useful for:
-            # - CRM dashboards
-            # - Explainability
-            # - Sales visibility
-            # ----------------------------------------------
-            "breakdown": {
-
-                # ICP / fit scoring
-                "fit": score_payload.fit_score,
-
-                # Engagement/intent scoring
-                "behavior": score_payload.behavior_score,
-
-                # Data quality scoring
-                "quality": score_payload.quality_score,
-
-                # Risk/penalty deductions
-                "penalty": score_payload.penalty_score
-            },
-
-            # --------------------------------------------------
-            # Human-readable scoring explanations
-            #
-            # Example:
-            # [
-            #   "Business email detected",
-            #   "Recent CRM activity found"
-            # ]
-            # --------------------------------------------------
-            "reasons": score_payload.reasons
-        }
+                # Human-readable scoring explanations
+                "reasons": getattr(score_payload, "reasons", []) or getattr(score_payload, "explanations", [])
+            }
 
         # --------------------------------------------------
         # Send POST request to CRM

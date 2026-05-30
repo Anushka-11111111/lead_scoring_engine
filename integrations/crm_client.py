@@ -1,132 +1,160 @@
-import requests
-import urllib3
+# integrations/crm_client.py
 
-# Disable SSL warnings
-urllib3.disable_warnings(
-    urllib3.exceptions.InsecureRequestWarning
-)
+import logging
+from typing import Any, Dict, Optional
+
+import httpx
+
+logger = logging.getLogger(__name__)
 
 
 class CRMClient:
     """
-    Generic CRM API client used for communicating
-    with external CRM systems.
+    Togile CRM API client using api-key / secret-key authentication.
+    No login tokens or session cookies required.
     """
 
-    def __init__(self, base_url, auth):
+    LEADS_TABLE_PATH = "/api/v1/leads/table"
 
-        # Remove trailing slash
+    def __init__(
+        self,
+        base_url: str,
+        api_key: str,
+        secret_key: str,
+        origin: str,
+        timeout: float = 60.0,
+    ):
         self.base_url = base_url.rstrip("/")
+        self.timeout = timeout
+        origin_value = origin.rstrip("/") if origin else origin
 
-        # Authentication handler
-        self.auth = auth
-
-    # =========================================
-    # HEADERS
-    # =========================================
-
-    def _get_headers(self):
-
-        return {
-
-            "Accept": "*/*",
-
+        self._json_headers = {
+            "api-key": api_key,
+            "secret-key": secret_key,
+            "origin": origin_value,
             "Content-Type": "application/json",
-
-            "Origin": "https://app.togile.com",
-
-            "Referer": "https://app.togile.com/",
-
-            "User-Agent": "Mozilla/5.0",
-
-            # Auth headers
-            **self.auth.get_headers()
+            "Accept": "application/json",
+        }
+        self._read_headers = {
+            "api-key": api_key,
+            "secret-key": secret_key,
+            "origin": origin_value,
+            "Accept": "application/json",
         }
 
-    # =========================================
-    # COOKIES
-    # =========================================
+    @classmethod
+    def from_settings(cls) -> "CRMClient":
+        from services.crm_config_store import CRMNotConfiguredError, get_crm_credentials
 
-    def _get_cookies(self):
+        creds = get_crm_credentials()
+        if not creds:
+            raise CRMNotConfiguredError(
+                "CRM is not configured. Enter API key, secret key, base URL, and origin in Settings."
+            )
 
-        return self.auth.get_cookies()
+        return cls(
+            base_url=creds["base_url"],
+            api_key=creds["api_key"],
+            secret_key=creds["secret_key"],
+            origin=creds["origin"],
+        )
 
-    # =========================================
-    # GENERIC PUT
-    # =========================================
-
-    def put(self, endpoint, payload=None):
-
-        # Build full URL
+    def put(self, endpoint: str, payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         url = f"{self.base_url}{endpoint}"
 
         try:
-
-            # =========================================
-            # REQUEST
-            # =========================================
-
-            response = requests.put(
-
-                url,
-
-                json=payload,
-
-                headers=self._get_headers(),
-
-                cookies=self._get_cookies(),
-
-                # ✅ SSL FIX
-                verify=False,
-
-                timeout=60
-            )
-
-            # =========================================
-            # DEBUG LOGGING
-            # =========================================
-
-            print(f"\n🌐 PUT: {url}")
-
-            print("📤 PAYLOAD:", payload)
-
-            print(f"🔁 STATUS: {response.status_code}")
-
-            print("📦 RAW RESPONSE:")
-
-            print(response.text[:1000])
-
-            # =========================================
-            # JSON PARSE
-            # =========================================
-
-            try:
-
-                return response.json()
-
-            except Exception:
-
-                raise Exception(
-                    f"\n❌ NOT JSON RESPONSE\n"
-                    f"Status: {response.status_code}\n"
-                    f"Body: {response.text[:300]}"
+            with httpx.Client(timeout=self.timeout, follow_redirects=True) as client:
+                response = client.put(
+                    url,
+                    headers=self._json_headers,
+                    json=payload or {},
                 )
-
-        except Exception as e:
-
-            print(f"\n❌ CRM REQUEST FAILED: {e}")
-
+                response.raise_for_status()
+                return response.json()
+        except httpx.HTTPStatusError as exc:
+            logger.error(
+                "CRM PUT %s failed (%s): %s",
+                url,
+                exc.response.status_code,
+                exc.response.text[:500],
+            )
             return {
                 "success": False,
-                "error": str(e)
+                "error": str(exc),
+                "status_code": exc.response.status_code,
             }
+        except Exception as exc:
+            logger.error("CRM PUT %s failed: %s", url, exc)
+            return {"success": False, "error": str(exc)}
 
-    # =========================================
-    # UPDATE LEAD
-    # =========================================
+    def post(self, endpoint: str, payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        url = f"{self.base_url}{endpoint}"
 
-    def update_lead(self, lead_id, payload):
+        try:
+            with httpx.Client(timeout=self.timeout, follow_redirects=True) as client:
+                response = client.post(
+                    url,
+                    headers=self._json_headers,
+                    json=payload or {},
+                )
+                response.raise_for_status()
+                return response.json()
+        except httpx.HTTPStatusError as exc:
+            logger.error(
+                "CRM POST %s failed (%s): %s",
+                url,
+                exc.response.status_code,
+                exc.response.text[:500],
+            )
+            return {
+                "success": False,
+                "error": str(exc),
+                "status_code": exc.response.status_code,
+            }
+        except Exception as exc:
+            logger.error("CRM POST %s failed: %s", url, exc)
+            return {"success": False, "error": str(exc)}
 
-        endpoint = f"/lead/{lead_id}"
+    def get(self, endpoint: str) -> Dict[str, Any]:
+        url = f"{self.base_url}{endpoint}"
 
-        return self.put(endpoint, payload)
+        try:
+            with httpx.Client(timeout=self.timeout, follow_redirects=True) as client:
+                response = client.get(url, headers=self._read_headers)
+                response.raise_for_status()
+                return response.json()
+        except httpx.HTTPStatusError as exc:
+            logger.error(
+                "CRM GET %s failed (%s): %s",
+                url,
+                exc.response.status_code,
+                exc.response.text[:500],
+            )
+            return {
+                "success": False,
+                "error": str(exc),
+                "status_code": exc.response.status_code,
+            }
+        except Exception as exc:
+            logger.error("CRM GET %s failed: %s", url, exc)
+            return {"success": False, "error": str(exc)}
+
+    def fetch_leads_table(
+        self,
+        page: int = 1,
+        quantity: int = 50,
+        sort_field: str = "sf_created_at",
+        is_ascending: bool = False,
+        **extra: Any,
+    ) -> Dict[str, Any]:
+        payload = {
+            "page": page,
+            "quantity": quantity,
+            "sortField": sort_field,
+            "isAscending": is_ascending,
+            **extra,
+        }
+        return self.put(self.LEADS_TABLE_PATH, payload)
+
+    def fetch_lead(self, lead_id: str) -> Dict[str, Any]:
+        return self.get(f"/api/v1/leads/{lead_id}")

@@ -3,6 +3,10 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from api.routes.sync import router as sync_router
 from api.routes.analytics import router as analytics_router
+from api.routes.score import router as score_router
+from api.routes.leads import router as leads_router
+from api.routes.config import router as config_router
+from services.crm_config_store import init_crm_config
 
 app = FastAPI()
 
@@ -11,15 +15,23 @@ app.add_middleware(
     allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"]
+    allow_headers=["*"],
 )
 
+app.include_router(config_router)
 app.include_router(sync_router)
 app.include_router(analytics_router)
+app.include_router(score_router)
+app.include_router(leads_router)
+
+
+@app.on_event("startup")
+def startup():
+    init_crm_config()
 
 
 @app.get("/")
 def root():
     return {
-        "message": "AI CRM Backend Running"
+        "message": "AI CRM Backend Running",
     }
